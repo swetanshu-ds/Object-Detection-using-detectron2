@@ -3,7 +3,13 @@
 3. https://colab.research.google.com/drive/16jcaJoc6bCFAQ96jDe2HwtXj7BMD_-m5
 4.  Now we have run some line of code from start and now explore the different model.zoo of detectron2 pytorch
 5.  You can find the model zoo using the below link
-6. Model Zoo and Baselines - https://github.com/facebookresearch/detectron2/blob/main/MODEL_ZOO.md
+6. Model Zoo and Baselines - 
+
+
+                https://github.com/facebookresearch/detectron2/blob/main/MODEL_ZOO.md
+                
+                
+                
 7. Now the colab notebook
 8.  Now run before Train on a custom dataset
 9.                                  
@@ -46,5 +52,172 @@
 
 
 
-24.  Now upload the Custom_Training_Detectron2.ipynb file in google drive and upload the data.zip folder
-25.  
+24.  Now upload the Custom_Training_Detectron2.ipynb file in google colab and upload the data.zip folder directly in colab 
+        there is an option of uploading any file directly and it is below File -> Files -> then an above arrow option of upload and click on it for the upload.\
+        
+25.   Unzip the data.zip
+26.   Now register the dataset - execute the below line of code
+                from detectron2.data.datasets import register_coco_instances
+                register_coco_instances("customtrain", {}, "./data/trainval.json", "./data/images")
+
+27.    All Code to run till here - 
+
+
+
+                    !pip install pyyaml==5.1
+                    !pip install torch==1.8.0+cu101 torchvision==0.9.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+                    
+                    
+                    
+                    !pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/torch1.8/index.html
+                    
+                    
+                    
+                    import torch
+                    assert torch.__version__.startswith("1.8") 
+                    import torchvision
+                    import cv2
+                    
+                    
+                    
+                    # Some basic setup:
+                    # Setup detectron2 logger
+                    import detectron2
+                    from detectron2.utils.logger import setup_logger
+                    setup_logger()
+
+                    # import some common libraries
+                    import numpy as np
+                    import os, json, cv2, random
+                    from google.colab.patches import cv2_imshow
+
+                    # import some common detectron2 utilities
+                    from detectron2 import model_zoo
+                    from detectron2.engine import DefaultPredictor
+                    from detectron2.config import get_cfg
+                    from detectron2.utils.visualizer import Visualizer
+                    from detectron2.data import MetadataCatalog, DatasetCatalog
+                    
+                    
+                    !unzip data.zip
+                    
+                    from detectron2.data.datasets import register_coco_instances
+                    register_coco_instances("customtrain", {}, "./data/trainval.json", "./data/images")
+                    
+                    sample_metadata = MetadataCatalog.get("customtrain")
+                    dataset_dicts = DatasetCatalog.get("customtrain")
+                    
+                    
+------------------------------    *************         Now lets start training our model *************** ---------------------------------------------------
+
+import random
+
+for d in random.sample(dataset_dicts, 4):
+    img = cv2.imread(d["file_name"])
+    visualizer = Visualizer(img[:, :, ::-1], metadata=sample_metadata, scale=0.5)
+    vis = visualizer. draw_dataset_dict(d)
+    cv2_imshow(vis.get_image()[:, :, ::-1])
+
+
+
+
+Default trainer is responsible to start the training
+
+from detectron2.engine import DefaultTrainer
+
+
+cfg = get_cfg()
+cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+cfg.DATASETS.TRAIN = ("customtrain",)
+cfg.DATASETS.TEST = ()
+cfg.DATALOADER.NUM_WORKERS = 2
+cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+cfg.SOLVER.IMS_PER_BATCH = 2
+cfg.SOLVER.BASE_LR = 0.0025  # pick a good LR
+cfg.SOLVER.MAX_ITER = 300    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # faster, and good enough for this toy dataset (default: 512)
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 14  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+# NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
+
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+trainer = DefaultTrainer(cfg) 
+trainer.resume_or_load(resume=True)
+trainer.train()
+                     
+                    
+                    
+ Till here the training is completed
+ 
+ 
+                                          Stop Training or resume Training
+                                          
+                                          
+                                          
+ 28.    Now if we want to stop training or resume training
+ 29.    After completeing the training ,there is a output file created ,this output file will contain last_checkpoint file that will be responsible for resume the training.
+ 
+                        
+                        
+                                Inferencing using the Custom Trained Model in Colab
+                                
+                                Run this below lines
+  
+  
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
+cfg.DATASETS.TEST = ("customtrain", )
+predictor = DefaultPredictor(cfg)
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         
+from detectron2.utils.visualizer import ColorMode
+
+for d in random.sample(dataset_dicts, 4):    
+    im = cv2.imread(d["file_name"])
+    outputs = predictor(im)
+    v = Visualizer(im[:, :, ::-1],
+                   metadata=sample_metadata, 
+                   scale=0.8, 
+                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels
+    )
+    v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    cv2_imshow(v.get_image()[:, :, ::-1])
+    
+    
+    
+                                            Evaluating the Model
+                                            
+                                            
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+from detectron2.data import build_detection_test_loader
+evaluator = COCOEvaluator("customtrain", ("bbox", "segm"), False, output_dir="./output/")
+val_loader = build_detection_test_loader(cfg, "customtrain")
+print(inference_on_dataset(trainer.model, val_loader, evaluator))
+
+                                            
+                                            
+                                            
+                                            
+                                           Getting the custom config file
+                                           
+                                           
+                                           
+f = open('config.yml', 'w')
+f.write(cfg.dump())
+f.close()                                       
+                                           
+
+
+
+
+                                      Thankyou
+                                           
