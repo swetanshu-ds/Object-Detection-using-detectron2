@@ -1,0 +1,50 @@
+1. Go to the github link : https://github.com/facebookresearch/Detectron2
+2.  Go down to Getting Started and clock on Colab Notebook
+3. https://colab.research.google.com/drive/16jcaJoc6bCFAQ96jDe2HwtXj7BMD_-m5
+4.  Now we have run some line of code from start and now explore the different model.zoo of detectron2 pytorch
+5.  You can find the model zoo using the below link
+6. Model Zoo and Baselines - https://github.com/facebookresearch/detectron2/blob/main/MODEL_ZOO.md
+7. Now the colab notebook
+8.  Now run before Train on a custom dataset
+9.                                  
+
+
+
+
+
+                                            Train on a custom dataset  in your local pc (run the command of only this section in your pc) 
+                                            
+                                            
+                                            
+10. Now go to labelme github - https://github.com/wkentaro/labelme
+11. In your local system - create a new folder names as labelme 
+12.  Now create a new environment name as --    labelenv
+13.  conda create -n labelenv python=3.6
+14. activate the environment 
+15.  use -------------          pip install  pyqt5      
+
+16.  pip install labelme==3.16.7
+17  To start the tool labelme use - =----------------------    labelme
+18.   Now  label the images
+
+19.  Now start the terminal and go to where all the files are kept  andactivate the labelenv environment and then run the 
+20. following command ------------
+                                python labelme2coco.py images --output allannotations.json
+
+21.    the above command will create a file and that file will hold all the annotations of the images
+22.    Now create a new file  by using the following command - 
+
+23.                  python labelme2coco.py images --output trainval.json
+
+
+
+
+
+
+
+                      Registering Dataset for Training
+
+
+
+24.  Now upload the Custom_Training_Detectron2.ipynb file in google drive and upload the data.zip folder
+25.  
