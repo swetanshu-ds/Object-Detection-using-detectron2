@@ -1,5 +1,5 @@
 1. Go to the github link : https://github.com/facebookresearch/Detectron2
-2.  Go down to Getting Started and clock on Colab Notebook
+2.  Go down to Getting Started and click on Colab Notebook
 3. https://colab.research.google.com/drive/16jcaJoc6bCFAQ96jDe2HwtXj7BMD_-m5
 4.  Now we have run some line of code from start and now explore the different model.zoo of detectron2 pytorch
 5.  You can find the model zoo using the below link
